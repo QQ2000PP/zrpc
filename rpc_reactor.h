@@ -1,6 +1,6 @@
 
-#ifndef __qs_kvs_reactor_h__
-#define __qs_kvs_reactor_h__
+#ifndef __rpc_reactor_h__
+#define __rpc_reactor_h__
 
 #define MAX_BUF_SIZE  128
 #define MAX_FD        1024
