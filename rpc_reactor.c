@@ -12,15 +12,14 @@
 
 #define  MAX_PORTS   1
 
+static msg_propocal rpc_msg;
+//extern int rpc_request(f_reactor *s_reactor);
 
-static msg_propocal kvs_msg;
-//extern int kvs_request(f_reactor *s_reactor);
-
-int kvs_request(f_reactor *s_reactor){
+int rpc_request(f_reactor *s_reactor){
 
 //	printf("ret: %d, recv: %s\n", s_reactor->rlength, s_reactor->rbuf);
 
-	int count = kvs_msg(s_reactor->rbuf, s_reactor->rlength, s_reactor->wbuf);
+	int count = rpc_msg(s_reactor->rbuf, s_reactor->rlength, s_reactor->wbuf);
 	s_reactor->wlength = count;
 
 }
@@ -35,13 +34,6 @@ int epfd = 0;
 f_reactor s_reactor[MAX_FD] = {0};
 
 
-
-int set_event(int fd, int event, int event_switch);
-int register_str(int fd, int event, int event_switch);
-int accept_callback(int fd);
-int recv_callback(int fd);
-int send_callback(int fd);
-int reactor_init_server(unsigned short port);
 
 
 int set_event(int fd, int event, int event_switch){
@@ -106,31 +98,34 @@ int recv_callback(int fd){
 
 
 
+#if 0
 	int ret = recv(fd, s_reactor[fd].rbuf, MAX_BUF_SIZE,0);
-//	printf("ret: %d, recv: %s\n", ret, s_reactor[fd].rbuf);
-
+#elif RPC_NETWORK
+	int ret = recv(fd, s_reactor[fd].rbuf, ZRPC_MSG_HEADER_LENGTH,0);	
+	ret += recv(fd, s_reactor[fd].rbuf + ZRPC_MSG_HEADER_LENGTH, MAX_BUF_SIZE - ZRPC_MSG_HEADER_LENGTH,0);
+//	printf("QQQQret: %d, recv: %s\n", ret, s_reactor[fd].rbuf + 8);		
+#endif
 		// close
-		if (ret == 0){
-//			printf("fd: %d close\n", fd);
+		if (ret > 0) {
+		//	printf("ret: %d, recv: %s\n", ret, s_reactor[fd].rbuf + 8);
+//			printf("recv: %s\n", s_reactor[fd].rbuf + 8);
+		}
+		else {
+			if (ret < 0){
+				printf("recv ret: %d, fd error: %d, errno = %d\n", ret, fd, errno);
+			}else if (ret = 0){
+
+			}
+
 			close(fd);
 			epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL); 
 			return -1;
 		}
 
 	set_event(fd, EPOLLOUT, 1);
-
 	s_reactor[fd].rlength = ret;
-#if 0 
-	memcpy(s_reactor[fd].wbuf, s_reactor[fd].rbuf, s_reactor[fd].rlength);
-	s_reactor[fd].wlength = s_reactor[fd].rlength;
-	
-	return ret;
-
-#else
-
-	kvs_request(&s_reactor[fd]);
-
-#endif 		
+	rpc_request(&s_reactor[fd]);
+		
 
 }
 
@@ -168,7 +163,7 @@ int reactor_init_server(unsigned short port){
 int reactor_start(unsigned short port, msg_propocal handler){    // non-complete
 
 //	unsigned short port = 2048;
-	kvs_msg = handler;
+	rpc_msg = handler;
 	
 
 	epfd = epoll_create(1);
