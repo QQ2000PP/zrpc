@@ -1,3 +1,1 @@
-git remote add origin https://github.com/QQ2000PP/zrpc.git
-git branch -M main
-git push -u origin main
+gcc -o rpc_server_pub rpc_server_pub.c rpc_reactor.c
