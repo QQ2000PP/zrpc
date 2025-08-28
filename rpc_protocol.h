@@ -2,7 +2,7 @@
 #define __rpc_protoco_h__
 
 
-
+#include <fcntl.h>
 #include <stdio.h>
 #include <errno.h>
 #include <unistd.h>
@@ -11,6 +11,7 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include "rpc_reactor.h"
+#include "crc32.h"
 
 
 
@@ -18,6 +19,8 @@
 
 
 
+#define ZRPC_CLIENT_IP  "192.168.80.134"
+#define ZRPC_CLIENT_PORT  2000
 
 
 

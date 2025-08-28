@@ -1,13 +1,8 @@
 #include "rpc_protocol.h"
-#include "rpc_reactor.h"
-#include <fcntl.h>
-#include <unistd.h>
-#include <unistd.h>
-#include "crc32.h"
 
 
-#define ZRPC_CLIENT_IP  "192.168.80.134"
-#define ZRPC_CLIENT_PORT  2000
+
+
 
 
 
