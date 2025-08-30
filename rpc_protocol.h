@@ -12,6 +12,8 @@
 #include <string.h>
 #include "rpc_reactor.h"
 #include "crc32.h"
+#include <assert.h>
+#include <stdlib.h>
 
 
 
@@ -33,7 +35,7 @@
 
 
 int zrpc_connect_server(const char * ip, unsigned short port);
-char * zrpc_client_send(char * body);
+char * zrpc_client_session(char * body);
 
 
 

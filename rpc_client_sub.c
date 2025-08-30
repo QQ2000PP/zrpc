@@ -5,12 +5,12 @@ int add(int a, int b){
 
 	char * addjson = "{  \
 			\"method\": \"add\", \
-			\"params\": [\"a\", \"b\"], \
+			\"params\": [\"3\", \"4\"], \
  			\"types\": [\"int\", \"int\"], \
 			\"rettype\": \"int\" \
 		}";
 	
-	zrpc_client_send(addjson);
+	zrpc_client_session(addjson);
 	return 7;
 }
 

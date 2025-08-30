@@ -112,7 +112,7 @@ int recv_callback(int fd){
 		}
 		else {
 			if (ret < 0){
-				printf("recv ret: %d, fd error: %d, errno = %d\n", ret, fd, errno);
+//				printf("recv ret: %d, fd error: %d, errno = %d\n", ret, fd, errno);
 			}else if (ret = 0){
 
 			}
