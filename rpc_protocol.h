@@ -14,6 +14,7 @@
 #include "crc32.h"
 #include <assert.h>
 #include <stdlib.h>
+#include "cJSON.h"
 
 
 
