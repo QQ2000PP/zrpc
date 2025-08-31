@@ -1,0 +1,34 @@
+ #// zrpc_add request
+{
+	"method":	"add",
+	"params":	{
+		"a":	4,
+		"b":	3
+	},
+	"callerid":	19088743
+}
+ #// zrpc_add response
+{
+	"method":	"add",
+	"results":	7,
+	"callerid":	19088743
+}
+
+
+ #// zrpc_cat request{
+{
+    "method":	"zcat",
+	"params":	{
+		"a":	"abc",
+		"b":	"rpq",
+        "c":    "stu"
+	},
+	"callerid":	19088743
+}
+
+ #// zrpc_add response
+{
+	"method":	"zcat",
+	"results":	"abcrpqstu",
+	"callerid":	19088743
+}

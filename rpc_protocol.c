@@ -69,18 +69,19 @@ char * zrpc_client_session(char * body){
 	unsigned short body_length = *(unsigned short *)(rpc_header + 2);
 	printf("body_length: %d\n", body_length);		
 	
-	char * count_client = (char *)malloc(body_length + 1);
-	if (!count_client) return NULL;
-	memset(count_client, 0, body_length);
-	int count = recv(connfd, count_client, body_length, 0);
+	char * payload_client = (char *)malloc(body_length + 1);
+	if (!payload_client) return NULL;
+	memset(payload_client, 0, body_length);
+	int count = recv(connfd, payload_client, body_length, 0);
 	assert(count == body_length);
 	
-	printf("count_client: %s, count: %d\n", count_client, count);
-	free(count_client);	
+	printf("payload_client: %s, count: %d\n", payload_client, count);
+//	free(payload_client);	
 
 	
+	close(connfd);
 
-
+	return payload_client;
 }
 
 

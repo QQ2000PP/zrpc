@@ -37,6 +37,7 @@
 
 int zrpc_connect_server(const char * ip, unsigned short port);
 char * zrpc_client_session(char * body);
+void zrpc_header_constr(char * rpc_header, char * body);
 
 
 
