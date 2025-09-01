@@ -15,7 +15,7 @@
 }
 
 
- #// zrpc_cat request{
+ #// zrpc_zcat request{
 {
     "method":	"zcat",
 	"params":	{
@@ -26,9 +26,27 @@
 	"callerid":	19088743
 }
 
- #// zrpc_add response
+ #// zrpc_zcat response
 {
 	"method":	"zcat",
 	"results":	"abcrpqstu",
+	"callerid":	19088743
+}
+
+
+ #// zrpc_sayhello request{
+{
+    "method":	"sayhello",
+	"params":	{
+		"msg":	"rpc nb",
+		"length":	6,
+	},
+	"callerid":	19088743
+}
+
+ #// zrpc_sayhello response
+{
+	"method":	"sayhello",
+	"results":	"bc cpr",
 	"callerid":	19088743
 }

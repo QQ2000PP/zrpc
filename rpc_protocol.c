@@ -61,7 +61,6 @@ char * zrpc_client_session(char * body){
 
 
 
-
 	// recv 
 
 	memset(rpc_header, 0, ZRPC_HEAD_LENGTH);
@@ -75,7 +74,7 @@ char * zrpc_client_session(char * body){
 	int count = recv(connfd, payload_client, body_length, 0);
 	assert(count == body_length);
 	
-	printf("payload_client: %s, count: %d\n", payload_client, count);
+//	printf("payload_client: %d, count: %d\n", payload_client, count);
 //	free(payload_client);	
 
 	
@@ -86,10 +85,58 @@ char * zrpc_client_session(char * body){
 
 
 
+int zrpc_method_add(int a, int b){
+	return a+b;
+
+}
+
+
 char * zrpc_server_session(char * bodyload){
 
+	// 传client发过来cJSON解析为char * --> 执行函数，返回char* --> 返回CJSON  	
+	// 怎么使method和对应的函数连接起来
+	// 为什么 strcmp(func, "add") 不相等？？？？
 	
+	cJSON *root = cJSON_Parse(bodyload);
+	if (!root) return NULL;
 
+	cJSON * method = cJSON_GetObjectItem(root, "method");
+
+	char * func = cJSON_Print(method);
+	printf("func: %s, method: %s, strcmp(func, \"add\"): %d\n", func, "method", strcmp(func, "add"));
+	cJSON * callerid = cJSON_GetObjectItem(root, "callerid");
+//	printf("callerid: %d\n", callerid->valueint);
+		
+	if (strcmp(method->valuestring, "add") == 0){
+		cJSON * params = cJSON_GetObjectItem(root, "params");
+		cJSON * a = cJSON_GetObjectItem(params, "a");		
+		cJSON * b = cJSON_GetObjectItem(params, "b");	
+		
+		int result_add = zrpc_method_add(a->valueint, b->valueint);
+		
+
+		// 组织成cJSON（不能把之前的root删掉，因为有重要的callerid）
+		cJSON * response = cJSON_CreateObject();
+		cJSON_AddStringToObject(response, "method", "add");
+		cJSON_AddNumberToObject(response, "results", result_add);
+		cJSON_AddNumberToObject(response, "callerid", callerid->valueint);
+		char * server_body_add = cJSON_Print(response);
+		cJSON_Delete(response);
+
+		printf("server_body_add: %s\n", server_body_add);
+		return server_body_add;
+					
+		
+
+	}else if (strcmp(method->valuestring, "zcat") == 0){
+
+	}else if (strcmp(method->valuestring, "sayhello") == 0){
+
+
+	}else {
+		printf("this fuction: %s is not included now!\n", method->valuestring);
+		return NULL;
+	}
 
 }
 
