@@ -183,7 +183,7 @@ char * sayhello(char * msg, int length ){
 
 int main(){
 
-#if 1
+#if 0
 	int a = 4;
 	int b = 3;
 	int sum = add(a, b);
@@ -198,7 +198,7 @@ int main(){
 	printf("zcat_result: %s\n", zcat_result);
 	free(zcat_result);
 #elif 1
-	char * msg = "zrpc nb";
+	char * msg = "zrpc nb le";
 	int  length  = strlen(msg);
 
 	char * sayhello_result = sayhello(msg, length);

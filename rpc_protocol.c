@@ -91,6 +91,42 @@ int zrpc_method_add(int a, int b){
 }
 
 
+char * zrpc_method_zcat(char * a, char * b, char * c){
+
+	if (!a || !b || !c) return NULL;
+
+	int a_length = strlen(a);
+	int b_length = strlen(b);	
+	int c_length = strlen(c);
+
+	char * zcat_result = (char * )malloc(a_length + b_length + c_length + 1);
+	if (!zcat_result) return NULL;
+	memset(zcat_result, 0, a_length + b_length + c_length + 1);
+	memcpy(zcat_result, a, a_length);
+	memcpy(zcat_result + a_length, b, b_length);
+	memcpy(zcat_result + a_length + b_length, c, c_length);
+
+	return zcat_result;
+
+}
+
+
+char * zrpc_method_sayhello(char * msg, int length){
+
+	if (!msg || (length <= 0)) return NULL;
+	
+	int i = 0;
+	for (i = 0; i < length / 2; i ++){
+		char temp = msg[i];
+		msg[i] = msg[length -1 - i]; 
+		msg[length - i - 1]  = temp;
+	}
+	printf("msg_result: %s\n", msg);
+	return msg;
+}
+
+
+
 char * zrpc_server_session(char * bodyload){
 
 	// 传client发过来cJSON解析为char * --> 执行函数，返回char* --> 返回CJSON  	
@@ -103,7 +139,7 @@ char * zrpc_server_session(char * bodyload){
 	cJSON * method = cJSON_GetObjectItem(root, "method");
 
 	char * func = cJSON_Print(method);
-	printf("func: %s, method: %s, strcmp(func, \"add\"): %d\n", func, "method", strcmp(func, "add"));
+//	printf("func: %s, method: %s, strcmp(func, \"add\"): %d\n", func, "method", strcmp(func, "add"));
 	cJSON * callerid = cJSON_GetObjectItem(root, "callerid");
 //	printf("callerid: %d\n", callerid->valueint);
 		
@@ -129,8 +165,53 @@ char * zrpc_server_session(char * bodyload){
 		
 
 	}else if (strcmp(method->valuestring, "zcat") == 0){
+		cJSON * params = cJSON_GetObjectItem(root, "params");
+		cJSON * a = cJSON_GetObjectItem(params, "a");		
+		cJSON * b = cJSON_GetObjectItem(params, "b");	
+		cJSON * c = cJSON_GetObjectItem(params, "c");	
+
+		
+		char * result_zcat = zrpc_method_zcat(a->valuestring, b->valuestring, c->valuestring);
+		
+
+		// 组织成cJSON（不能把之前的root删掉，因为有重要的callerid）
+		cJSON * response = cJSON_CreateObject();
+		cJSON_AddStringToObject(response, "method", "zcat");
+		cJSON_AddStringToObject(response, "results", result_zcat);
+		cJSON_AddNumberToObject(response, "callerid", callerid->valueint);
+		char * server_body_zcat = cJSON_Print(response);
+		cJSON_Delete(response);
+
+		printf("server_body_zcat: %s\n", server_body_zcat);		
+		free(result_zcat);
+			
+		return server_body_zcat;
+
+		
+	
 
 	}else if (strcmp(method->valuestring, "sayhello") == 0){
+		cJSON * params = cJSON_GetObjectItem(root, "params");
+		cJSON * msg = cJSON_GetObjectItem(params, "msg");		
+		cJSON * length = cJSON_GetObjectItem(params, "length");	
+
+		
+		char * result_sayhello = zrpc_method_sayhello(msg->valuestring, length->valueint);
+		
+
+		// 组织成cJSON（不能把之前的root删掉，因为有重要的callerid）
+		cJSON * response = cJSON_CreateObject();
+		cJSON_AddStringToObject(response, "method", "sayhello");
+		cJSON_AddStringToObject(response, "results", result_sayhello);
+		cJSON_AddNumberToObject(response, "callerid", callerid->valueint);
+		char * server_body_sayhello = cJSON_Print(response);
+		cJSON_Delete(response);
+
+		printf("server_body_result_sayhello: %s\n", server_body_sayhello);		
+		free(result_sayhello);
+			
+		return server_body_sayhello;
+
 
 
 	}else {

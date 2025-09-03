@@ -99,6 +99,8 @@ int rpc_handler(char * rbuf, int rlength, char * response){
 		memcpy(response + ZRPC_HEAD_LENGTH, body_server, strlen(body_server));
 	#endif
 	
+		free (body_client);
+		free (body_server);
 
 #endif
 	
