@@ -42,6 +42,12 @@ char * zrpc_server_session(char * bodyload);
 
 
 
+// client func
+int add(int a, int b);
+char * zcat(char * a, char * b, char * c );
+char * sayhello(char * msg, int length );
+
+
 
 
 #endif 
