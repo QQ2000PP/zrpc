@@ -40,7 +40,15 @@ int rpc_handler(char * rbuf, int rlength, char * response){
 #else 
 
 	// server_recv
+#if 1
+	char * rpc_header = (char *)malloc(ZRPC_HEAD_LENGTH + 1);
+	if (!rpc_header) {
+		printf("rpc_header malloc failed\n");
+		return -1;
+	}
+#else 	
 	char rpc_header[ZRPC_HEAD_LENGTH] = {0};
+#endif
 	memset(rpc_header, 0, ZRPC_HEAD_LENGTH);
 	memcpy(rpc_header, rbuf, ZRPC_HEAD_LENGTH);
 	
@@ -58,6 +66,7 @@ int rpc_handler(char * rbuf, int rlength, char * response){
 	
 	// 函数运行
 	char * body_server =  zrpc_server_session(body_client);
+	free (body_client);
 
 
 
@@ -99,8 +108,9 @@ int rpc_handler(char * rbuf, int rlength, char * response){
 		memcpy(response + ZRPC_HEAD_LENGTH, body_server, strlen(body_server));
 	#endif
 	
-		free (body_client);
+
 		free (body_server);
+		free(rpc_header);
 
 #endif
 	

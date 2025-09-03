@@ -61,6 +61,9 @@ int set_event(int fd, int event, int event_switch){
 
 int register_str(int fd, int event, int event_switch){
 
+
+
+
 	s_reactor[fd].fd = fd;
 	memset(s_reactor[fd].rbuf,0,MAX_BUF_SIZE);
 	s_reactor[fd].rlength = 0;
@@ -116,7 +119,7 @@ int recv_callback(int fd){
 			}else if (ret = 0){
 
 			}
-
+			printf("close fd: %d\n", fd);
 			close(fd);
 			epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL); 
 			return -1;

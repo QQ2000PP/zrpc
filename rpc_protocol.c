@@ -69,6 +69,9 @@ char * zrpc_client_session(char * body){
 	printf("body_length: %d\n", body_length);		
 	
 	char * payload_client = (char *)malloc(body_length + 1);
+
+	printf("payload_client malloc sucessful\n");
+	
 	if (!payload_client) return NULL;
 	memset(payload_client, 0, body_length);
 	int count = recv(connfd, payload_client, body_length, 0);

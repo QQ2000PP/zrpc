@@ -3,7 +3,7 @@
 #define __rpc_reactor_h__
 
 
-#define MAX_BUF_SIZE  128
+#define MAX_BUF_SIZE  2048
 #define MAX_FD        1024
 
 
