@@ -15,6 +15,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include "cJSON.h"
+#include <ctype.h>
 
 
 
@@ -46,6 +47,7 @@ char * zrpc_server_session(char * bodyload);
 int add(int a, int b);
 char * zcat(char * a, char * b, char * c );
 char * sayhello(char * msg, int length );
+char * zrpc_toupper(char * msg, int length );
 
 
 

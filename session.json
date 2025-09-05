@@ -50,3 +50,20 @@
 	"results":	"bc cpr",
 	"callerid":	19088743
 }
+
+ #// zrpc_toupper request{
+{
+    "method":	"toupper",
+	"params":	{
+		"msg":	"AABBccdd",
+		"length":	8,
+	},
+	"callerid":	19088743
+}
+
+ #// zrpc_sayhello response
+{
+	"method":	"toupper",
+	"results":	"AABBCCDD",
+	"callerid":	19088743
+}

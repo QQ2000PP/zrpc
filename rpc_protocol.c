@@ -130,6 +130,26 @@ char * zrpc_method_sayhello(char * msg, int length){
 }
 
 
+char * zrpc_method_toupper(char *msg, int length) {
+    if (!msg || length <= 0) return NULL;
+
+    char *str_upper = (char *)malloc(length + 1); // 分配内存，+1 保留 '\0'
+    if (!str_upper) return NULL;
+
+    for (int i = 0; i < length; i++) {
+        str_upper[i] = toupper(msg[i]);
+    }
+
+	printf("zrpc_method_toupper: %s\n", str_upper);
+	
+	memset(msg, 0, length);
+	memcpy(msg, str_upper,length);
+	free(str_upper);
+    return msg;
+}
+
+
+
 
 char * zrpc_server_session(char * bodyload){
 
@@ -143,7 +163,7 @@ char * zrpc_server_session(char * bodyload){
 	cJSON * method = cJSON_GetObjectItem(root, "method");
 
 	char * func = cJSON_Print(method);
-//	printf("func: %s, method: %s, strcmp(func, \"add\"): %d\n", func, "method", strcmp(func, "add"));
+	printf("func: %s, strcmp(): %d\n", func, strcmp(method->valuestring, "toupper"));
 	cJSON * callerid = cJSON_GetObjectItem(root, "callerid");
 //	printf("callerid: %d\n", callerid->valueint);
 		
@@ -216,6 +236,28 @@ char * zrpc_server_session(char * bodyload){
 			
 		return server_body_sayhello;
 
+	}else if (strcmp(method->valuestring, "toupper") == 0){
+
+		cJSON * params = cJSON_GetObjectItem(root, "params");
+		cJSON * msg = cJSON_GetObjectItem(params, "msg");		
+		cJSON * length = cJSON_GetObjectItem(params, "length");	
+
+		
+		char * result_toupper= zrpc_method_toupper(msg->valuestring, length->valueint);
+		
+
+		// 组织成cJSON（不能把之前的root删掉，因为有重要的callerid）
+		cJSON * response = cJSON_CreateObject();
+		cJSON_AddStringToObject(response, "method", "toupper");
+		cJSON_AddStringToObject(response, "results", result_toupper);
+		cJSON_AddNumberToObject(response, "callerid", callerid->valueint);
+		char * server_body_toupper = cJSON_Print(response);
+		cJSON_Delete(response);
+
+		printf("server_body_result_toupper: %s\n", server_body_toupper);		
+		free(result_toupper);
+			
+		return server_body_toupper;
 
 
 	}else {
@@ -409,6 +451,42 @@ char * sayhello(char * msg, int length ){
 
 }
 
+char * zrpc_toupper(char * msg, int length ){
+
+
+	// 发送client send body
+	cJSON * root = cJSON_CreateObject();
+	cJSON_AddStringToObject(root, "method", "toupper");
+	cJSON * params = cJSON_CreateObject();
+	cJSON_AddItemToObject(root, "params", params);
+	cJSON_AddStringToObject(params, "msg", msg);
+	cJSON_AddNumberToObject(params, "length", length);
+
+	cJSON_AddNumberToObject(root, "callerid", global_callerid++); // global_callerid++ atomic
+	char * body = cJSON_Print(root);
+	printf("client_send: %s\n", body);
+	cJSON_Delete(root); 
+
+
+	char * payload_client = zrpc_client_session(body);	
+	
+	// 解析client response body
+	root = cJSON_Parse(payload_client);
+	cJSON * results = cJSON_GetObjectItem(root, "results");
+	char * ret_num = cJSON_Print(results);	
+	char * ret_strdup = strdup(ret_num);
+
+
+	cJSON_Delete(root);
+
+	free(payload_client);
+	free(body);
+	free(ret_num);
+
+	return ret_strdup;	
+
+
+}
 
 
 

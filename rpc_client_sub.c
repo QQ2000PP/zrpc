@@ -10,7 +10,7 @@
 
 int main(){
 
- 
+
 	int a = 111;
 	int b = 222;
 	int sum = add(a, b);
@@ -31,6 +31,14 @@ int main(){
 	char * sayhello_result = sayhello(msg, length);
 	printf("sayhello_result: %s\n", sayhello_result);
 	free(sayhello_result);
+
+
+
+	char * str = "AABBccdd";
+	int str_length = strlen(str);
+	char * toupper_result = zrpc_toupper(str, str_length);
+	printf("toupper_result: %s\n", toupper_result);
+	free(toupper_result);
 
 
 	
