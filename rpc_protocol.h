@@ -1,7 +1,9 @@
 #ifndef __rpc_protoco_h__
 #define __rpc_protoco_h__
 
-
+#define _GNU_SOURCE
+#include <dlfcn.h>
+#include <stdarg.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <errno.h>
@@ -16,6 +18,8 @@
 #include <stdlib.h>
 #include "cJSON.h"
 #include <ctype.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 
 
@@ -33,13 +37,19 @@
 
 
 
-
-
-
 int zrpc_connect_server(const char * ip, unsigned short port);
 char * zrpc_client_session(char * body);
 void zrpc_header_constr(char * rpc_header, char * body);
 char * zrpc_server_session(char * bodyload);
+int zrpc_caller_register( char * filename);
+char * zrpc_caller_name(void);
+char * caller(int numargc, ...);
+int read_conf_decode(char * file_content);
+char * read_conf(char * filename);
+
+
+
+char * read_conf(char * filename);
 
 
 

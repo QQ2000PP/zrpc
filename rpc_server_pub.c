@@ -53,14 +53,14 @@ int rpc_handler(char * rbuf, int rlength, char * response){
 	memcpy(rpc_header, rbuf, ZRPC_HEAD_LENGTH);
 	
 	unsigned short body_length = *(unsigned short *)(rpc_header + 2);
-	printf("body_length: %d\n", body_length);	
+//	printf("body_length: %d\n", body_length);	
 	unsigned int callerid = *(unsigned int *)(rpc_header + 4);
 		
 	char * body_client = (char *)malloc(body_length + 1);
 	if (!body_client) return -1;
 	memset(body_client, 0, body_length);
 	memcpy(body_client, rbuf + ZRPC_HEAD_LENGTH, body_length);
-	printf("body_client: %s\n", body_client);	
+//	printf("body_client: %s\n", body_client);	
 
 
 	

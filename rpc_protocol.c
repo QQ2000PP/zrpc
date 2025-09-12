@@ -2,11 +2,23 @@
 
 
 
+#define MAX_PARAMS  16
 
 
 
+struct zrpc_func{
 
+	char * method;
+	char * params[MAX_PARAMS];
+	char * types[MAX_PARAMS];
+	char * rettype;
+	int argv;
 
+	struct zrpc_func * next;	
+};
+
+struct zrpc_func * zrpc_func_table = NULL;
+int global_callerid =   0x1234567;
 
 
 
@@ -66,20 +78,21 @@ char * zrpc_client_session(char * body){
 	memset(rpc_header, 0, ZRPC_HEAD_LENGTH);
 	int ret = recv(connfd, rpc_header, ZRPC_HEAD_LENGTH, 0);
 	unsigned short body_length = *(unsigned short *)(rpc_header + 2);
-	printf("body_length: %d\n", body_length);		
+//	printf("body_length: %d\n", body_length);		
 	
 	char * payload_client = (char *)malloc(body_length + 1);
 
-	printf("payload_client malloc sucessful\n");
+//	printf("payload_client malloc sucessful\n");
 	
 	if (!payload_client) return NULL;
 	memset(payload_client, 0, body_length);
 	int count = recv(connfd, payload_client, body_length, 0);
+
+//	printf("payload_client: %s, count: %d\n", payload_client, count);	
 	assert(count == body_length);
-	
-//	printf("payload_client: %d, count: %d\n", payload_client, count);
+
 //	free(payload_client);	
-	printf("payload_client: %s\n", payload_client);
+//	printf("payload_client: %s\n", payload_client);
 
 	
 	close(connfd);
@@ -125,7 +138,7 @@ char * zrpc_method_sayhello(char * msg, int length){
 		msg[i] = msg[length -1 - i]; 
 		msg[length - i - 1]  = temp;
 	}
-	printf("msg_result: %s\n", msg);
+//	printf("msg_result: %s\n", msg);
 	return msg;
 }
 
@@ -140,7 +153,7 @@ char * zrpc_method_toupper(char *msg, int length) {
         str_upper[i] = toupper(msg[i]);
     }
 
-	printf("zrpc_method_toupper: %s\n", str_upper);
+//	printf("zrpc_method_toupper: %s\n", str_upper);
 	
 	memset(msg, 0, length);
 	memcpy(msg, str_upper,length);
@@ -163,7 +176,7 @@ char * zrpc_server_session(char * bodyload){
 	cJSON * method = cJSON_GetObjectItem(root, "method");
 
 	char * func = cJSON_Print(method);
-	printf("func: %s, strcmp(): %d\n", func, strcmp(method->valuestring, "toupper"));
+//	printf("func: %s, strcmp(): %d\n", func, strcmp(method->valuestring, "zrpc_toupper"));
 	cJSON * callerid = cJSON_GetObjectItem(root, "callerid");
 //	printf("callerid: %d\n", callerid->valueint);
 		
@@ -236,7 +249,7 @@ char * zrpc_server_session(char * bodyload){
 			
 		return server_body_sayhello;
 
-	}else if (strcmp(method->valuestring, "toupper") == 0){
+	}else if (strcmp(method->valuestring, "zrpc_toupper") == 0){
 
 		cJSON * params = cJSON_GetObjectItem(root, "params");
 		cJSON * msg = cJSON_GetObjectItem(params, "msg");		
@@ -248,7 +261,7 @@ char * zrpc_server_session(char * bodyload){
 
 		// 组织成cJSON（不能把之前的root删掉，因为有重要的callerid）
 		cJSON * response = cJSON_CreateObject();
-		cJSON_AddStringToObject(response, "method", "toupper");
+		cJSON_AddStringToObject(response, "method", "zrpc_toupper");
 		cJSON_AddStringToObject(response, "results", result_toupper);
 		cJSON_AddNumberToObject(response, "callerid", callerid->valueint);
 		char * server_body_toupper = cJSON_Print(response);
@@ -270,15 +283,218 @@ char * zrpc_server_session(char * bodyload){
 
 
 
+int read_conf_decode(char * file_content){
+
+	if (!file_content) return -1;
+
+/*
+	struct zrpc_func * func = (struct zrpc_func *)malloc(sizeof(struct zrpc_func)); 
+	if (!func) return -2;
+	memset(func, 0, sizeof(struct zrpc_func));
+*/
+
+	cJSON * root = cJSON_Parse(file_content);
+	cJSON * zrpc_namespace = cJSON_GetObjectItem(root, "namespace");
+	cJSON * zrpc_ip = cJSON_GetObjectItem(root, "remote");
+	cJSON * zrpc_port = cJSON_GetObjectItem(root, "port");
+	cJSON * zrpc_config = cJSON_GetObjectItem(root, "config");
+
+	int config_size = cJSON_GetArraySize(zrpc_config);
+	
+	printf("config_size: %d\n", config_size);
+	
+	int i = 0;
+	for (i = 0; i < config_size; i++){
+
+		// 每个一个func分配内存
+		struct zrpc_func * func = (struct zrpc_func *)malloc(sizeof(struct zrpc_func)); 
+		if (!func) return -2;
+		memset(func, 0, sizeof(struct zrpc_func));
+
+	
+		cJSON * config_ele = cJSON_GetArrayItem(zrpc_config, i);
+		cJSON * method = cJSON_GetObjectItem(config_ele, "method");
+		cJSON * params = cJSON_GetObjectItem(config_ele, "params");		
+		cJSON * types = cJSON_GetObjectItem(config_ele, "types");		
+		cJSON * rettypes = cJSON_GetObjectItem(config_ele, "rettype");	
+
+		int params_size = cJSON_GetArraySize(params);		
+		int types_size = cJSON_GetArraySize(types);	
+		assert((params_size == types_size) && (params_size < MAX_PARAMS));		
+		func->method = strdup(method->valuestring);
+		func->rettype = strdup(rettypes->valuestring);		
+
+		int j = 0;
+		for (j = 0; j < params_size; j++){
+			cJSON * param = cJSON_GetArrayItem(params, j);
+			func->params[j] = strdup(param->valuestring);
+			cJSON * type = cJSON_GetArrayItem(types, j);	
+			func->types[j] = strdup(type->valuestring);
+		}
+
+		func->argv = params_size;
+
+		func->next =  zrpc_func_table;
+		zrpc_func_table = func;
+	}	
+
+
+/*
+		// func
+		struct zrpc_func * current =  zrpc_func_table; // 不要破坏链表zrpc_func_table的表头
+		while(current){
+			printf("current->method: %s\n", current->method);
+			current = current->next;
+		}
+*/
+		cJSON_Delete(root);
+	return 0;	
+
+}
 
 
 
 
 
+char *  read_conf(char * filename){
+	if (!filename) return NULL;
+	
+	int file_fd = open(filename, O_RDONLY);
+	if (!file_fd) return NULL;
+
+	off_t file_size = lseek(file_fd, 0, SEEK_END);	
+	
+	#if 0	
+	
+	close(file_fd);
+	file_fd = open(filename, O_RDONLY);
+	
+	#else
+
+	lseek(file_fd, 0, SEEK_SET);
+
+	#endif
+	char * file_content = (char *)malloc(file_size + 1);
+	memset(file_content, 0, file_size + 1);
+
+	if (!file_content) {
+		close(file_fd);
+		free(file_content);
+		return NULL;
+	}
+
+	ssize_t count = read(file_fd, file_content, file_size);
+	file_content[file_size] = '\0';
+
+//	printf("read_conf ---> file_content:\n %s\n", file_content);	
+	return file_content; 
+}
 
 
 
 
+int zrpc_caller_register( char * filename){
+
+	if (!filename) return -1;
+
+	char * file_content = 	read_conf(filename);
+	
+	if (read_conf_decode(file_content) != 0) return -1;
+
+//	printf("2zrpc_caller_register ---> file_content: %s\n", file_content);
+	
+	free(file_content);
+}
+
+
+char * zrpc_caller_name(void){
+
+	const void * return_address = __builtin_return_address(1);
+	Dl_info  info;
+	int a = dladdr(return_address, &info);
+//	printf("ddladdr: %d, dli_sname: %s\n", a, info.dli_sname);
+	if ((0 != dladdr(return_address, &info) && (info.dli_sname != NULL))){
+
+		return (char *)info.dli_sname;
+	}
+
+	return NULL;
+}
+
+
+
+char * caller(int numargc, ...){
+
+	char * method = zrpc_caller_name();
+
+//	printf("--------------------------------------\n");
+
+	struct zrpc_func *  func = zrpc_func_table; 
+
+//   printf("=== caller函数开始 ===\n");
+//    printf("zrpc_func_table地址: %p\n", zrpc_func_table);
+
+	int x = 0;
+	while(func){
+		x = x + 1;		
+//		printf("----------------->Test zrpc_func_table->method: %s, method: %s, x: %d\n", func->method, method, x);
+		if (strcmp(func->method, method) == 0) break;		
+		func = func->next;
+	}
+
+	if (!func) return NULL;
+
+	assert(numargc == func->argv);
+
+	cJSON * root = cJSON_CreateObject();
+	cJSON_AddStringToObject(root, "method", method);
+	cJSON * params = cJSON_CreateObject();
+	cJSON_AddItemToObject(root, "params", params);
+
+	// 如何获取参数，一种固定模式如下：从可变参数列表中逐个提取参数 va_list结构体
+	va_list args;
+	va_start(args, numargc);
+
+	int i = 0;
+	for (i = 0; i < numargc; i++){
+		if (strcmp(func->types[i], "int") == 0){
+			cJSON_AddNumberToObject(params, func->params[i], va_arg(args, int));		
+		}else if (strcmp(func->types[i], "char *") == 0){
+			cJSON_AddStringToObject(params, func->params[i], va_arg(args, char *));	
+		}else if (strcmp(func->types[i], "float") == 0){
+			cJSON_AddNumberToObject(params, func->params[i], va_arg(args, double));	
+		}else {
+			printf("no support parmeter: %s, type: %s\n", func->params[i], func->types[i]);
+			return NULL;
+		}
+	}
+	
+	va_end(args);
+
+	cJSON_AddNumberToObject(root, "callerid", global_callerid++); // global_callerid++ atomic
+	char * body = cJSON_Print(root);
+	printf("client_send: %s\n", body);
+	cJSON_Delete(root);	
+
+
+	char * payload_client =	zrpc_client_session(body);	
+	printf("client_recv: %s\n", payload_client);
+	// 解析client response body
+	root = cJSON_Parse(payload_client);
+	cJSON * results = cJSON_GetObjectItem(root, "results");
+	char * ret_num = cJSON_Print(results);	
+//	int  ret = atoi(ret_num);
+	cJSON_Delete(root);
+
+	free(payload_client);
+	free(body);
+//	free(ret_num);
+	printf("-------------->ret_num: %s\n", ret_num);
+	return ret_num;
+
+	
+//	return method;
+}
 
 
 
@@ -286,10 +502,34 @@ char * zrpc_server_session(char * bodyload){
 // rpc_client commit
 
 
-int global_callerid =   0x1234567;
+/*
+struct zrpc_func{
+
+	char * method;
+	char * params[MAX_PARAMS];
+	char * types[MAX_PARAMS];
+	char * rettype;
+	int argv;
+
+	struct zrpc_func * next;	
+};
+
+*/
+
+
+
+
 
 int add(int a, int b){
 
+#if 1
+
+	char * result = caller(2, a, b);
+	int  ret = atoi(result);
+	free(result);	
+	return ret;
+	
+#else
 /*
 	char * addjson = "{  \
 			\"method\": \"add\", \
@@ -336,34 +576,23 @@ int add(int a, int b){
 	free(body);
 	free(ret_num);
 	
-	return ret;	
+	return ret;
+#endif	
 }
 
 char * zcat(char * a, char * b, char * c ){
 
-/*
- #// zrpc_cat request{
-{
-    "method":	"zcat",
-	"params":	{
-		"a":	"abc",
-		"b":	"rpq",
-        "c":    "xyz"
-	},
-	"callerid":	19088743
-}
+#if 1
 
- #// zrpc_add response
-{
-	"method":	"zcat",
-	"results":	"abcrpqstu",
-	"callerid":	19088743
-}
+	char * result = caller(3, a, b, c);
+	char *  ret = strdup(result);
+	free(result);
+	return ret;
 
-*/
+#else
 	// 发送client send body
 	cJSON * root = cJSON_CreateObject();
-	cJSON_AddStringToObject(root, "method", "zcat");
+	cJSON_AddStringToObject(root, "method","add");
 	cJSON * params = cJSON_CreateObject();
 	cJSON_AddItemToObject(root, "params", params);
 	cJSON_AddStringToObject(params, "a", a);
@@ -392,31 +621,20 @@ char * zcat(char * a, char * b, char * c ){
 	
 	return ret_strdup;	
 
-
+#endif
 }
 
 
 char * sayhello(char * msg, int length ){
 
-/*
-	 #// zrpc_sayhello request{
-	{
-	    "method":	"sayhello",
-		"params":	{
-			"msg":	"rpc nb",
-			"length":	6,
-		},
-		"callerid":	19088743
-	}
+#if 1
 
-	 #// zrpc_sayhello response
-	{
-		"method":	"sayhello",
-		"results":	"bc cpr",
-		"callerid":	19088743
-}
-*/
+	char * result = caller(2, msg, length);
+	char *	ret = strdup(result);
+	free(result);
+	return ret;
 
+#else 
 	// 发送client send body
 	cJSON * root = cJSON_CreateObject();
 	cJSON_AddStringToObject(root, "method", "sayhello");
@@ -447,16 +665,25 @@ char * sayhello(char * msg, int length ){
 	free(ret_num);
 
 	return ret_strdup;	
+#endif
 
 
 }
 
 char * zrpc_toupper(char * msg, int length ){
 
+#if 1
+	
+		char * result = caller(2, msg, length);
+		char *	ret = strdup(result);
+		free(result);
+		return ret;
+	
+#else 
 
 	// 发送client send body
 	cJSON * root = cJSON_CreateObject();
-	cJSON_AddStringToObject(root, "method", "toupper");
+	cJSON_AddStringToObject(root, "method", "zrpc_toupper");
 	cJSON * params = cJSON_CreateObject();
 	cJSON_AddItemToObject(root, "params", params);
 	cJSON_AddStringToObject(params, "msg", msg);
@@ -485,6 +712,7 @@ char * zrpc_toupper(char * msg, int length ){
 
 	return ret_strdup;	
 
+#endif
 
 }
 
